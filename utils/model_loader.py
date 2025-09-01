@@ -9,7 +9,9 @@ from langchain_groq import ChatGroq
 #from langchain_openai import ChatOpenAI
 from logger.custom_logger import CustomLogger
 from exception.custom_exception import DocumentPortalException
-log = CustomLogger().get_logger(__name__)
+
+# log initialization
+log = CustomLogger().get_logger(__name__) # getting model_loader file name
 
 class ModelLoader:
     
@@ -20,18 +22,18 @@ class ModelLoader:
     def __init__(self):
         
         load_dotenv()
-        self._validate_env()
+        self._validate_env() # if something wrong, this step will raise an error, and we won't continue
         self.config=load_config()
         log.info("Configuration loaded successfully", config_keys=list(self.config.keys()))
         
-    def _validate_env(self):
+    def _validate_env(self): # we use _ before <method_name> because we want to make it uncallable on the instance level
         """
         Validate necessary environment variables.
         Ensure API keys exist.
         """
-        required_vars=["GOOGLE_API_KEY","GROQ_API_KEY"]
-        self.api_keys={key:os.getenv(key) for key in required_vars}
-        missing = [k for k, v in self.api_keys.items() if not v]
+        required_vars=["GOOGLE_API_KEY","GROQ_API_KEY"] # validate that necessary keys exist in .env file
+        self.api_keys={key:os.getenv(key) for key in required_vars} # if required key is missing, value will be None. E.g. {'GOOGLE_API_KEY':None}
+        missing = [k for k, v in self.api_keys.items() if not v] # Keeps only the keys where v is falsy (empty string, None, etc.)
         if missing:
             log.error("Missing environment variables", missing_vars=missing)
             raise DocumentPortalException("Missing environment variables", sys)
@@ -51,20 +53,19 @@ class ModelLoader:
         
     def load_llm(self):
         """
-        Load and return the LLM model.
+        Load and return the LLM model dynamically based on provider in config.
         """
-        """Load LLM dynamically based on provider in config."""
-        
         llm_block = self.config["llm"]
 
         log.info("Loading LLM...")
         
-        provider_key = os.getenv("LLM_PROVIDER", "groq")  # Default groq
-        if provider_key not in llm_block:
+        provider_key = os.getenv("LLM_PROVIDER", "groq")  # Default groq if LLM_PROVIDER is not defined in .env
+        if provider_key not in llm_block: # not in YAML config file
             log.error("LLM provider not found in config", provider_key=provider_key)
             raise ValueError(f"Provider '{provider_key}' not found in config")
 
-        llm_config = llm_block[provider_key]
+        # from provider in YAML we take entire configuration. If some information is missing, we add it with get()
+        llm_config = llm_block[provider_key] 
         provider = llm_config.get("provider")
         model_name = llm_config.get("model_name")
         temperature = llm_config.get("temperature", 0.2)
@@ -100,8 +101,8 @@ class ModelLoader:
             raise ValueError(f"Unsupported LLM provider: {provider}")
         
     
-    
-if __name__ == "__main__":
+# to avoid side effects on import, you need to cover this code with name==main. Otherwise, each time you import ModelLoader, this code would execute as well    
+if __name__ == "__main__": 
     loader = ModelLoader()
     
     # Test embedding model loading

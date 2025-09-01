@@ -152,8 +152,8 @@
 ## testing for multidoc chat
 import sys
 from pathlib import Path
-from src.multi_document_chat.data_ingestion import DocumentIngestor
-from src.multi_document_chat.retrieval import ConversationalRAG
+from archive.src.multi_document_chat.data_ingestion import DocumentIngestor
+from archive.src.multi_document_chat.retrieval import ConversationalRAG
 
 def test_document_ingestion_and_rag():
     try:
@@ -178,7 +178,7 @@ def test_document_ingestion_and_rag():
             
         ingestor = DocumentIngestor()
         
-        retriever = ingestor.ingest_files(uploaded_files)
+        retriever = ingestor.ingest_files(uploaded_files) # read, embed, load to index/pickle FAISS files
         
         for f in uploaded_files:
             f.close()

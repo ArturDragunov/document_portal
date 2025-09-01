@@ -1,0 +1,26 @@
+[project]
+name = "document-portal"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "docx2txt==0.9",
+    "faiss-cpu==1.11.0.post1",
+    "fastapi==0.116.1",
+    "ipykernel==6.30.0",
+    "langchain==0.3.27",
+    "langchain-community==0.3.27",
+    "langchain-core==0.3.72",
+    "langchain-google-genai==2.1.8",
+    "langchain-groq==0.3.6",
+    "pylint==3.3.7",
+    "pymupdf==1.26.3",
+    "pypdf>=5.9.0",
+    "pytest>=8.4.1",
+    "python-dotenv==1.1.1",
+    "python-multipart==0.0.20",
+    "streamlit==1.47.1",
+    "structlog==25.4.0",
+    "uvicorn==0.35.0",
+]

@@ -13,12 +13,14 @@ class DocumentComparatorLLM:
     def __init__(self):
         load_dotenv()
         self.log = CustomLogger().get_logger(__name__)
-        self.loader = ModelLoader()
+        self.loader = ModelLoader() # here we have llm and embedding models to load
         self.llm = self.loader.load_llm()
         self.parser = JsonOutputParser(pydantic_object=SummaryResponse)
         self.fixing_parser = OutputFixingParser.from_llm(parser=self.parser, llm=self.llm)
+        #  enum approach is better for production code where you want early error detection and easier maintenance.
+        # self.prompt = PROMPT_REGISTRY.get('document_comparison)
         self.prompt = PROMPT_REGISTRY[PromptType.DOCUMENT_COMPARISON.value]
-        self.chain = self.prompt | self.llm | self.parser
+        self.chain = self.prompt | self.llm | self.fixing_parser
         self.log.info("DocumentComparatorLLM initialized", model=self.llm)
 
     def compare_documents(self, combined_docs: str) -> pd.DataFrame:
@@ -31,12 +33,14 @@ class DocumentComparatorLLM:
             self.log.info("Invoking document comparison LLM chain")
             response = self.chain.invoke(inputs)
             self.log.info("Chain invoked successfully", response_preview=str(response)[:200])
-            return self._format_response(response)
+            return self._format_response(response) # turn into pandas DataFrame
         except Exception as e:
             self.log.error("Error in compare_documents", error=str(e))
             raise DocumentPortalException("Error comparing documents", sys)
 
     def _format_response(self, response_parsed: list[dict]) -> pd.DataFrame: #type: ignore
+        """Formats the response from the LLM into a structured format.
+        """
         try:
             df = pd.DataFrame(response_parsed)
             return df

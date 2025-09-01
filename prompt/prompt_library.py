@@ -28,6 +28,8 @@ Your response should follow this format:
 
 {format_instruction}
 """)
+# format instruction is coming from the parser and combined docs is prepared by us in data_ingestion
+# (PDF texts are extracted and concatenated)
 
 # Prompt for contextual question rewriting
 contextualize_question_prompt = ChatPromptTemplate.from_messages([

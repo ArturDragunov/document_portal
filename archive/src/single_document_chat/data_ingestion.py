@@ -11,20 +11,20 @@ from utils.model_loader import ModelLoader
 
 
 class SingleDocIngestor:
-    def __init__(self,data_dir: str = "data/single_document_chat", faiss_dir: str = "faiss_index"):
+    def __init__(self,data_dir: str = "data/single_document_chat", faiss_dir: str = "faiss_index"): # faiss_dir - where we store vectore store
         try:
-            self.log = CustomLogger().get_logger(__name__)
+            self.log = CustomLogger().get_logger(__name__) # log initialization
             self.data_dir = Path(data_dir)
-            self.data_dir.mkdir(parents=True, exist_ok=True)
+            self.data_dir.mkdir(parents=True, exist_ok=True) # create folder for data if not existing
             self.faiss_dir = Path(faiss_dir)
-            self.faiss_dir.mkdir(parents=True, exist_ok=True)
+            self.faiss_dir.mkdir(parents=True, exist_ok=True) # create folder for faiss if not existing
             self.model_loader = ModelLoader()
             self.log.info("SingleDocIngestor initialized", temp_path=str(self.data_dir), faiss_path=str(self.faiss_dir))
         except Exception as e:
             self.log.error("Failed to initialize SingleDocIngestor", error=str(e))
             raise DocumentPortalException("Initialization error in SingleDocIngestor", sys)
         
-    def ingest_files(self,uploaded_files):
+    def ingest_files(self,uploaded_files): # files from here we store in VectorDB
         try:
             documents = []
             
@@ -33,10 +33,12 @@ class SingleDocIngestor:
                 temp_path=self.data_dir / unique_filename
                 
                 with open(temp_path, "wb") as f_out:
-                    f_out.write(uploaded_file.read()) 
+                    f_out.write(uploaded_file.read()) # we are already wirjubg with a _io.BufferedReader' object.
+                    # So, we don't need to use getbuffer() here. read() is enough.
                 self.log.info("PDF saved for ingestion", filename=uploaded_file.name)
                 
-                loader = PyPDFLoader(str(temp_path))
+                # you first create a copy of the file in the session and then you start working WITH THIS copy
+                loader = PyPDFLoader(str(temp_path)) 
                 docs = loader.load()
                 documents.extend(docs)
             self.log.info("PDF files loaded", count=len(documents))
@@ -55,7 +57,7 @@ class SingleDocIngestor:
             embeddings = self.model_loader.load_embeddings()
             vectorstore = FAISS.from_documents(documents=chunks, embedding=embeddings)
             
-            # save FAISS index
+            # save FAISS index -> you are saving index and pickle here
             vectorstore.save_local(str(self.faiss_dir))
             self.log.info("FAISS index created and saved", faiss_path=str(self.faiss_dir))
             

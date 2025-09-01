@@ -9,22 +9,22 @@ from logger.custom_logger import CustomLogger
 from exception.custom_exception import DocumentPortalException
 from utils.model_loader import ModelLoader
 class DocumentIngestor:
-    SUPPORTED_EXTENSIONS = {'.pdf', '.docx', '.txt', '.md'}
+    SUPPORTED_EXTENSIONS = {'.pdf', '.docx', '.txt'}
     def __init__(self, temp_dir:str = "data/multi_doc_chat",faiss_dir: str = "faiss_index", session_id: str | None = None):
+        # session_id belongs to 1 user
         try:
             self.log = CustomLogger().get_logger(__name__)
-            
             
             # base dirs
             self.temp_dir = Path(temp_dir)
             self.faiss_dir = Path(faiss_dir)
             self.temp_dir.mkdir(parents=True, exist_ok=True)
-            self.faiss_dir.mkdir(parents=True, exist_ok=True)
+            self.faiss_dir.mkdir(parents=True, exist_ok=True) # we create faiss_index folder
             
             # sessionized paths
             self.session_id = session_id or f"session_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
             self.session_temp_dir = self.temp_dir / self.session_id
-            self.session_faiss_dir = self.faiss_dir / self.session_id
+            self.session_faiss_dir = self.faiss_dir / self.session_id # for each session we have embedding
             self.session_temp_dir.mkdir(parents=True, exist_ok=True)
             self.session_faiss_dir.mkdir(parents=True, exist_ok=True)
             
@@ -43,20 +43,20 @@ class DocumentIngestor:
             raise DocumentPortalException("Initialization error in DocumentIngestor", sys)
             
     
-    def ingest_files(self,uploaded_files):
+    def ingest_files(self,uploaded_files): # read data, embed it and then save it to a vector db
         try:
             documents=[]
             
             for uploaded_file in uploaded_files:
-                ext = Path(uploaded_file.name).suffix.lower()
-                if ext not in self.SUPPORTED_EXTENSIONS:
+                ext = Path(uploaded_file.name).suffix.lower() # get file extension
+                if ext not in self.SUPPORTED_EXTENSIONS: # we skip unsupported files
                     self.log.warning("Unsupported file skipped", filename=uploaded_file.name)
                     continue
-                unique_filename = f"{uuid.uuid4().hex[:8]}{ext}"
+                unique_filename = f"{uuid.uuid4().hex[:8]}{ext}" # versioning -> copy file
                 temp_path = self.session_temp_dir / unique_filename
                 
                 with open(temp_path, "wb") as f:
-                    f.write(uploaded_file.read())
+                    f.write(uploaded_file.read()) # we save a version of the uploaded file
                 self.log.info("File saved for ingestion", filename=uploaded_file.name, saved_as=str(temp_path), session_id=self.session_id)
                 
                 if ext == ".pdf":
@@ -82,8 +82,8 @@ class DocumentIngestor:
             self.log.error("Failed to ingest files", error=str(e))
             raise DocumentPortalException("Ingestion error in DocumentIngestor", sys)
 
-    def _create_retriever(self, documents):
-        try:
+    def _create_retriever(self, documents): # we create index object of faiss db
+        try: # USE SEMANTIC CHUNKING! semantictextsplitter. it's better
             splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=300)
             
             chunks = splitter.split_documents(documents)

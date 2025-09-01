@@ -3,7 +3,7 @@ import sys
 from utils.model_loader import ModelLoader
 from logger.custom_logger import CustomLogger
 from exception.custom_exception import DocumentPortalException
-from model.models import *
+from model.models import * # import everything
 from langchain_core.output_parsers import JsonOutputParser
 from langchain.output_parsers import OutputFixingParser
 from prompt.prompt_library import PROMPT_REGISTRY # type: ignore
@@ -20,9 +20,14 @@ class DocumentAnalyzer:
             self.llm=self.loader.load_llm()
             
             # Prepare parsers
-            self.parser = JsonOutputParser(pydantic_object=Metadata)
-            self.fixing_parser = OutputFixingParser.from_llm(parser=self.parser, llm=self.llm)
-            
+            self.parser = JsonOutputParser(pydantic_object=Metadata) # JsonOutputParser raises OutputParserException when parsing fails
+            self.fixing_parser = OutputFixingParser.from_llm(parser=self.parser, llm=self.llm) # OutputFixingParser is a wrapper around original parser
+            # When the original parser fails, OutputFixingParser catches the exception
+            # It then makes another LLM call with a prompt like:
+            # "Instructions: Fix the following text to match the expected format.
+            # Completion: [the bad output]
+            # Error: [the parsing error message]
+            # Please fix the completion:"
             self.prompt = PROMPT_REGISTRY["document_analysis"]
             
             self.log.info("DocumentAnalyzer initialized successfully")

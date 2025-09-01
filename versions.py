@@ -1,4 +1,5 @@
 import importlib.metadata
+# versions file gives you package names and their versions used in venv
 packages = [
     "langchain",
     "python-dotenv",

@@ -38,7 +38,7 @@ git clone https://github.com/sunnysavita10/document_portal.git
 ```
 ## Minimum Requirements for the Project
 
-### LLM Models
+### LLM Models - anything works
 - **Groq** (Free)
 - **OpenAI** (Paid)
 - **Gemini** (15 Days Free Access)

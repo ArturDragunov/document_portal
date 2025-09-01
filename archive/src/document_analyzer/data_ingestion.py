@@ -1,7 +1,7 @@
 import os
 import fitz
 import sys
-import uuid
+import uuid # universal indentification number
 from datetime import datetime
 from logger.custom_logger import CustomLogger
 from exception.custom_exception import DocumentPortalException
@@ -12,12 +12,16 @@ class DocumentHandler:
     Automatically logs all actions and supports session-based organization.
     """
     def __init__(self,data_dir=None,session_id=None):
+        # session directory code - during every execution 1 directory will be created and a data version will be saved
+        # Example of data versioning
         try:
-            self.log=CustomLogger().get_logger(__name__)
-            self.data_dir = data_dir or os.getenv(
+            self.log=CustomLogger().get_logger(__name__) # logger initialization
+            #interesting syntax with "or". you don't need to write separate if statement
+            self.data_dir = data_dir or os.getenv( # either you take input location OR you take it from .env OR default location
                 "DATA_STORAGE_PATH",
                 os.path.join(os.getcwd(), "data", "document_analysis")
             )
+            # after each execution it will save data under separate session id
             self.session_id = session_id or f"session_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
             
             # Create base session directory
@@ -53,6 +57,7 @@ class DocumentHandler:
             raise DocumentPortalException("Error saving PDF", e) from e
 
     def read_pdf(self, pdf_path:str)->str:
+        # You can modify the method upon your needs -> use different methods for pdf reading (OCR?)
         try:
             text_chunks = []
             with fitz.open(pdf_path) as doc:
@@ -67,18 +72,19 @@ class DocumentHandler:
             raise DocumentPortalException("Error reading PDF", e) from e
     
 if __name__ == "__main__":
+    # we first keep data in memory for faster process and only then we keep it in a physical file
     from pathlib import Path
     from io import BytesIO
-    
-    pdf_path=r"C:\\Users\\sunny\\document_portal\\data\\document_analysis\\sample.pdf"
-    class DummnyFile:
+    # testing code:
+    pdf_path=r"C:\Users\Artur Dragunov\Documents\GIT\document_portal\data\document_analysis\sample.pdf"
+    class DummyFile: # dummy class
         def __init__(self,file_path):
-            self.name = Path(file_path).name
-            self._file_path = file_path
+            self.name = Path(file_path).name # Path() creates a system compatible path
+            self._file_path = file_path # private variable
         def getbuffer(self):
             return open(self._file_path, "rb").read()
         
-    dummy_pdf = DummnyFile(pdf_path)
+    dummy_pdf = DummyFile(pdf_path)
     
     handler = DocumentHandler()
     
